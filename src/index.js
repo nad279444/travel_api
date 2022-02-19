@@ -3,8 +3,12 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
+import mongoose from 'mongoose';
+import  {notFound,otherErrors } from './errorMiddlewares.js';
+import router from './api/routes/travelLogs.js'
 
 const app = express();
+dotenv.config()
 
 const port = process.env.PORT || 1337
 
@@ -12,27 +16,24 @@ const port = process.env.PORT || 1337
 app.use(morgan('common'));
 app.use(helmet());
 app.use(cors());
+app.use(express.json())
 
 //routes
-app.get('/',(req,res) => {
-    res.json({
-       message: 'it works' 
-    })
-})
+app.use ('/routes',router)
+
+const db = process.env.DATABASE_URL
+
+mongoose.connect(db,
+    {useNewUrlParser:true,useUnifiedTopology:true})
+    .then(() => {console.log('database is connected live')}).catch((error) => `unable to connect ${error.message}` )
+    
+
+
+
 
 //error handling
-app.use((req,res,next) => {
-    const error = new Error('this is the wrong route');
-    res.status(404);
-    next(error);
-})
-
-app.use((error,req,res,next) => {
-    const statusCode =  res.statusCode === 200 ? 500: res.statusCode
-    res.json({
-        message: error.message
-    })
-})
+app.use(notFound);
+app.use(otherErrors);
 
 
 
